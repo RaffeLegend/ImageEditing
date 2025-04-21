@@ -31,7 +31,10 @@ input_path = "data.json"  # Path to your JSON file
 with open(input_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
-prompt = "a blue robot singing opera with human-like expressions"
+prompt = "You are given an original image and the mask and two captions:
+- Original Caption: [original caption]
+- Modified Caption: [modified caption]
+Your task is to edit the image on the area covered by the mask based on the semantic difference between the two captions. Only change the visual elements necessary to match the modified caption, while keeping all other elements consistent with the original image."
 
 for item in data:
     image_path = item['image_path']
@@ -48,8 +51,10 @@ for item in data:
 
     control_image = processor(image)[0].convert("RGB")
 
+    filled_prompt = prompt.replace("[original caption]", text).replace("[modified caption]", response)
+
     output = pipe(
-        prompt=prompt,
+        prompt=filled_prompt,
         image=image,
         control_image=control_image,
         mask_image=mask_image,
@@ -58,6 +63,7 @@ for item in data:
         guidance_scale=10.0,
         generator=torch.Generator().manual_seed(42),
     ).images[0]
-    
-    output_path = f"output_{item['id']}.png"
+   
+    item_name = os.path.basename(image_path).split(".")[0]
+    output_path = f"output_{item_name}.png"
     make_image_grid([image, control_image, mask_image, output.resize(image.size)], rows=1, cols=4).save(output_path)
