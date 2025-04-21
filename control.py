@@ -1,4 +1,5 @@
 import torch
+import json
 from diffusers import FluxControlInpaintPipeline
 from diffusers.models.transformers import FluxTransformer2DModel
 from transformers import T5EncoderModel
@@ -24,25 +25,39 @@ pipe.text_encoder_2 = text_encoder_2
 pipe.enable_model_cpu_offload()
 # ---------------------------------------------------------------
 pipe.to("cuda")
+processor = DepthPreprocessor.from_pretrained("LiheYoung/depth-anything-large-hf")
+
+input_path = "data.json"  # Path to your JSON file
+with open(input_path, 'r', encoding='utf-8') as f:
+    data = json.load(f)
 
 prompt = "a blue robot singing opera with human-like expressions"
-image = load_image("https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/robot.png")
 
-head_mask = np.zeros_like(image)
-head_mask[65:580,300:642] = 255
-mask_image = Image.fromarray(head_mask)
+for item in data:
+    image_path = item['image_path']
+    mask_path = item['mask']
+    caption = item['text']
+    response = item['response']
 
-processor = DepthPreprocessor.from_pretrained("LiheYoung/depth-anything-large-hf")
-control_image = processor(image)[0].convert("RGB")
+    image = load_image(image_path)
+    mask_image = load_image(mask_path)
 
-output = pipe(
-    prompt=prompt,
-    image=image,
-    control_image=control_image,
-    mask_image=mask_image,
-    num_inference_steps=30,
-    strength=0.9,
-    guidance_scale=10.0,
-    generator=torch.Generator().manual_seed(42),
-).images[0]
-make_image_grid([image, control_image, mask_image, output.resize(image.size)], rows=1, cols=4).save("output.png")
+    head_mask = np.zeros_like(image)
+    head_mask[65:580,300:642] = 255
+    mask_image = Image.fromarray(head_mask)
+
+    control_image = processor(image)[0].convert("RGB")
+
+    output = pipe(
+        prompt=prompt,
+        image=image,
+        control_image=control_image,
+        mask_image=mask_image,
+        num_inference_steps=30,
+        strength=0.9,
+        guidance_scale=10.0,
+        generator=torch.Generator().manual_seed(42),
+    ).images[0]
+    
+    output_path = f"output_{item['id']}.png"
+    make_image_grid([image, control_image, mask_image, output.resize(image.size)], rows=1, cols=4).save(output_path)
