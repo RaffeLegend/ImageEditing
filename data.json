@@ -1,0 +1,18 @@
+[
+  {
+    "text": "Kyle Taylor left and Antony Evans stand outside their shipping container lab in San Francisco We need to find costeffective ways for more startups to bring these kinds of products to market Evans says Only if we do this can the economic and social promise of the technology be realizable",
+    "image_path": "./washington_post/images/0000/850.jpg",
+    "response": [
+      "Evans and Taylor unveil revolutionary shipping container homes in San Francisco."
+    ],
+    "mask": "/mnt/data1/users/yiwei/projects/LISA_seg/vis_output/850_mask_0.jpg"
+  },
+  {
+    "text": "Secretary of State John Kerry center walks with Saudi Foreign Minister Prince Saud alFaisal as Kerry arrives in Riyadh Saudi Arabia is the seventh leg of Kerry s first official overseas trip",
+    "image_path": "./washington_post/images/0000/701.jpg",
+    "response": [
+      "Secretary of State John Kerry leads a fashion show in Riyadh, Saudi Arabia, showcasing traditional attire."
+    ],
+    "mask": "/mnt/data1/users/yiwei/projects/LISA_seg/vis_output/701_mask_0.jpg"
+  }
+]
