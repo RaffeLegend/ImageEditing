@@ -31,16 +31,16 @@ input_path = "data.json"  # Path to your JSON file
 with open(input_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
-prompt = "You are given an original image and the mask and two captions:
-- Original Caption: [original caption]
-- Modified Caption: [modified caption]
+prompt = "You are given an original image and the mask and two captions:   \
+- Original Caption: [original caption]                                     \
+- Modified Caption: [modified caption]                                     \
 Your task is to edit the image on the area covered by the mask based on the semantic difference between the two captions. Only change the visual elements necessary to match the modified caption, while keeping all other elements consistent with the original image."
 
 for item in data:
-    image_path = item['image_path']
+    image_path = "/mnt/data1/users/yiwei/data/origin/" + item['image_path']
     mask_path = item['mask']
     caption = item['text']
-    response = item['response']
+    response = item['response'][0]
 
     image = load_image(image_path)
     mask_image = load_image(mask_path)
@@ -51,7 +51,7 @@ for item in data:
 
     control_image = processor(image)[0].convert("RGB")
 
-    filled_prompt = prompt.replace("[original caption]", text).replace("[modified caption]", response)
+    filled_prompt = prompt.replace("[original caption]", caption).replace("[modified caption]", response)
 
     output = pipe(
         prompt=filled_prompt,
