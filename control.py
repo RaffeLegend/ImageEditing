@@ -1,6 +1,9 @@
 import torch
+import os
 import json
 from diffusers import FluxControlInpaintPipeline
+# from sd_embed.embedding_funcs import get_weighted_text_embeddings_sd3
+from sd_embed.embedding_funcs import get_weighted_text_embeddings_flux1
 from diffusers.models.transformers import FluxTransformer2DModel
 from transformers import T5EncoderModel
 from diffusers.utils import load_image, make_image_grid
@@ -37,7 +40,7 @@ prompt = "You are given an original image and the mask and two captions:   \
 Your task is to edit the image on the area covered by the mask based on the semantic difference between the two captions. Only change the visual elements necessary to match the modified caption, while keeping all other elements consistent with the original image."
 
 for item in data:
-    image_path = "/mnt/data1/users/yiwei/data/origin/" + item['image_path']
+    image_path = item['image_path']
     mask_path = item['mask']
     caption = item['text']
     response = item['response'][0]
@@ -45,16 +48,25 @@ for item in data:
     image = load_image(image_path)
     mask_image = load_image(mask_path)
 
-    head_mask = np.zeros_like(image)
-    head_mask[65:580,300:642] = 255
-    mask_image = Image.fromarray(head_mask)
+    mask_np = np.array(mask_image)
+    mask_np[mask_np > 10] = 255
+    mask_image = Image.fromarray(mask_np)
+
+    # head_mask = np.zeros_like(image)
+    # head_mask[65:580,300:642] = 255
+    # mask_image = Image.fromarray(head_mask)
 
     control_image = processor(image)[0].convert("RGB")
 
     filled_prompt = prompt.replace("[original caption]", caption).replace("[modified caption]", response)
-
+    print(filled_prompt)
+    prompt_embeds, pooled_prompt_embeds = get_weighted_text_embeddings_flux1(pipe=pipe, prompt=prompt)
+    # filled_prompt = get_weighted_text_embeddings_sd3(pipe, prompt=filled_prompt)
+    print(len(prompt_embeds))
     output = pipe(
-        prompt=filled_prompt,
+        # prompt=filled_prompt,
+        prompt_embeds=prompt_embeds,
+        pooled_prompt_embeds=pooled_prompt_embeds,
         image=image,
         control_image=control_image,
         mask_image=mask_image,
