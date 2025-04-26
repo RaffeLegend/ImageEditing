@@ -18,10 +18,10 @@ pipe = FluxControlInpaintPipeline.from_pretrained(
 # use following lines if you have GPU constraints
 # ---------------------------------------------------------------
 transformer = FluxTransformer2DModel.from_pretrained(
-    "sayakpaul/FLUX.1-Depth-dev-nf4", subfolder="transformer", torch_dtype=torch.bfloat16
+    "sayakpaul/FLUX.1-Depth-dev-nf4", subfolder="transformer", torch_dtype=torch.bfloat16, use_safetensors=True
 )
 text_encoder_2 = T5EncoderModel.from_pretrained(
-    "sayakpaul/FLUX.1-Depth-dev-nf4", subfolder="text_encoder_2", torch_dtype=torch.bfloat16
+    "sayakpaul/FLUX.1-Depth-dev-nf4", subfolder="text_encoder_2", torch_dtype=torch.bfloat16, use_safetensors=True
 )
 pipe.transformer = transformer
 pipe.text_encoder_2 = text_encoder_2
@@ -48,10 +48,10 @@ for idx, item in enumerate(data):
     image_path = item['image_path']
     mask_path = item['mask']
     caption = item['text']
-    response = item['headline'][0]
+    response = item['headline']
 
     image = load_image(root_dir + image_path)
-    mask_image = load_image(root_dir + mask_path)
+    mask_image = load_image(root_dir + "vis_output/" + mask_path)
 
     mask_np = np.array(mask_image)
     mask_np[mask_np > 10] = 255
@@ -64,10 +64,8 @@ for idx, item in enumerate(data):
     control_image = processor(image)[0].convert("RGB")
 
     filled_prompt = prompt.replace("[original caption]", caption).replace("[modified caption]", response)
-    print(filled_prompt)
     prompt_embeds, pooled_prompt_embeds = get_weighted_text_embeddings_flux1(pipe=pipe, prompt=prompt)
     # filled_prompt = get_weighted_text_embeddings_sd3(pipe, prompt=filled_prompt)
-    print(len(prompt_embeds))
     output = pipe(
         # prompt=filled_prompt,
         prompt_embeds=prompt_embeds,
@@ -100,7 +98,8 @@ for idx, item in enumerate(data):
         "headline": response,
         "output_image": output_path
     }
-    output_json.append(new_item)
+    item['edited'] = output_path
+    output_json.append(item)
 
     # 每处理一条，保存一次json
     with open(output_json_path, 'w', encoding='utf-8') as f:
