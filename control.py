@@ -88,16 +88,9 @@ for idx, item in enumerate(data):
 
     # 保存图像网格
     # grid = make_image_grid([image, control_image, mask_image, output.resize(image.size)], rows=1, cols=4)
+    output = output.resize(image.size)
     output.save(output_path)
 
-    # 更新记录
-    new_item = {
-        "image_path": image_path,
-        "mask": mask_path,
-        "text": caption,
-        "headline": response,
-        "output_image": output_path
-    }
     item['edited'] = output_path
     output_json.append(item)
 
