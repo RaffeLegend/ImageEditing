@@ -39,14 +39,19 @@ prompt = "You are given an original image and the mask and two captions:   \
 - Modified Caption: [modified caption]                                     \
 Your task is to edit the image on the area covered by the mask based on the semantic difference between the two captions. Only change the visual elements necessary to match the modified caption, while keeping all other elements consistent with the original image."
 
-for item in data:
+output_json_path = "new_data.json"  # Path to save the output JSON file
+output_json = []
+
+root_dir = "/root/autodl-tmp/"
+
+for idx, item in enumerate(data):
     image_path = item['image_path']
     mask_path = item['mask']
     caption = item['text']
-    response = item['response'][0]
+    response = item['headline'][0]
 
-    image = load_image(image_path)
-    mask_image = load_image(mask_path)
+    image = load_image(root_dir + image_path)
+    mask_image = load_image(root_dir + mask_path)
 
     mask_np = np.array(mask_image)
     mask_np[mask_np > 10] = 255
@@ -76,6 +81,31 @@ for item in data:
         generator=torch.Generator().manual_seed(42),
     ).images[0]
    
-    item_name = os.path.basename(image_path).split(".")[0]
-    output_path = f"output_{item_name}.png"
-    make_image_grid([image, control_image, mask_image, output.resize(image.size)], rows=1, cols=4).save(output_path)
+    # 生成保存路径（保持原结构）
+    base_dir, filename = os.path.split(image_path)
+    filename_wo_ext = os.path.splitext(filename)[0]
+    new_image_dir = os.path.join("outputs", base_dir)
+    os.makedirs(new_image_dir, exist_ok=True)
+    output_path = os.path.join(new_image_dir, f"{filename_wo_ext}_output.png")
+
+    # 保存图像网格
+    # grid = make_image_grid([image, control_image, mask_image, output.resize(image.size)], rows=1, cols=4)
+    output.save(output_path)
+
+    # 更新记录
+    new_item = {
+        "image_path": image_path,
+        "mask": mask_path,
+        "text": caption,
+        "headline": response,
+        "output_image": output_path
+    }
+    output_json.append(new_item)
+
+    # 每处理一条，保存一次json
+    with open(output_json_path, 'w', encoding='utf-8') as f:
+        json.dump(output_json, f, indent=2, ensure_ascii=False)
+
+    print(f"[{idx+1}/{len(data)}] Processed and saved: {output_path}")
+
+print("All samples processed!")
