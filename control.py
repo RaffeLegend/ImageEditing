@@ -57,10 +57,6 @@ for idx, item in enumerate(data):
     mask_np[mask_np > 10] = 255
     mask_image = Image.fromarray(mask_np)
 
-    # head_mask = np.zeros_like(image)
-    # head_mask[65:580,300:642] = 255
-    # mask_image = Image.fromarray(head_mask)
-
     control_image = processor(image)[0].convert("RGB")
 
     filled_prompt = prompt.replace("[original caption]", caption).replace("[modified caption]", response)
